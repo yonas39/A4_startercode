@@ -81,8 +81,118 @@ const operations: Operation[] = [
     fields: { id: "input" },
   },
   //
-  // ...
+  // ...Friending
+  {
+    name: "Send Friend Request",
+    endpoint: "/api/friend/request",
+    method: "POST",
+    fields: { to: "input" },
+  },
+  {
+    name: "Accept Friend Request",
+    endpoint: "/api/friend/accept/:from",
+    method: "PUT",
+    fields: { from: "input" },
+  },
+  {
+    name: "Reject Friend Request",
+    endpoint: "/api/friend/reject/:from",
+    method: "PUT",
+    fields: { from: "input" },
+  },
+  {
+    name: "Remove Friend",
+    endpoint: "/api/friends/:friend",
+    method: "DELETE",
+    fields: { friend: "input" },
+  },
+  {
+    name: "Get Friends",
+    endpoint: "/api/friends",
+    method: "GET",
+    fields: {},
+  },
   //
+  //
+  // Following Operations
+  //
+  {
+    name: "Follow User",
+    endpoint: "/api/follow",
+    method: "POST",
+    fields: { follower: "input", following: "input" },
+  },
+  {
+    name: "Unfollow User",
+    endpoint: "/api/follow/:follower/:following",
+    method: "DELETE",
+    fields: { follower: "input", following: "input" },
+  },
+  {
+    name: "Get Followers",
+    endpoint: "/api/followers/:user",
+    method: "GET",
+    fields: { user: "input" },
+  },
+  {
+    name: "Get Following",
+    endpoint: "/api/following/:user",
+    method: "GET",
+    fields: { user: "input" },
+  },
+  {
+    name: "Get Follower Count",
+    endpoint: "/api/followers/count/:user",
+    method: "GET",
+    fields: { user: "input" },
+  },
+  {
+    name: "Get Follow Status",
+    endpoint: "/api/follow/status",
+    method: "POST",
+    fields: { follower: "input", following: "input" },
+  },
+
+  //
+  //
+  // Quiz-related operations
+  {
+    name: "Create Quiz",
+    endpoint: "/api/quizzes",
+    method: "POST",
+    fields: {
+      title: "input",
+      questions: {
+        question: "input",
+        options: "json",
+        answer: "input"
+      }
+    }
+  },
+  {
+    name: "Publish Quiz",
+    endpoint: "/api/quizzes/:id/publish",
+    method: "PATCH",
+    fields: { id: "input" }
+  },
+  {
+    name: "Start Quiz",
+    endpoint: "/api/quizzes/:id/start",
+    method: "POST",
+    fields: { id: "input" }
+  },
+  {
+    name: "Answer Question",
+    endpoint: "/api/quizzes/:id/answer",
+    method: "POST",
+    fields: { id: "input", questionId: "input", answer: "input" }
+  },
+  {
+    name: "Get Player Progress",
+    endpoint: "/api/quizzes/:id/progress",
+    method: "GET",
+    fields: { id: "input" }
+  }
 ];
 
 /*

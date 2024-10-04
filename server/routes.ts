@@ -1,8 +1,8 @@
 import { ObjectId } from "mongodb";
 
-import { Router, getExpressRouter } from "./framework/router";
+import { getExpressRouter, Router } from "./framework/router";
 
-import { Authing, Friending, Posting, Sessioning } from "./app";
+import { Authing, Following, Friending, Posting, Quizing, Sessioning } from "./app";
 import { PostOptions } from "./concepts/posting";
 import { SessionDoc } from "./concepts/sessioning";
 import Responses from "./responses";
@@ -106,37 +106,22 @@ class Routes {
     return Posting.delete(oid);
   }
 
+
+  // FRIENDS
+  //
+  // Friending routes
+  //
   @Router.get("/friends")
   async getFriends(session: SessionDoc) {
     const user = Sessioning.getUser(session);
     return await Authing.idsToUsernames(await Friending.getFriends(user));
   }
 
-  @Router.delete("/friends/:friend")
-  async removeFriend(session: SessionDoc, friend: string) {
-    const user = Sessioning.getUser(session);
-    const friendOid = (await Authing.getUserByUsername(friend))._id;
-    return await Friending.removeFriend(user, friendOid);
-  }
-
-  @Router.get("/friend/requests")
-  async getRequests(session: SessionDoc) {
-    const user = Sessioning.getUser(session);
-    return await Responses.friendRequests(await Friending.getRequests(user));
-  }
-
-  @Router.post("/friend/requests/:to")
+  @Router.post("/friend/request")
   async sendFriendRequest(session: SessionDoc, to: string) {
     const user = Sessioning.getUser(session);
     const toOid = (await Authing.getUserByUsername(to))._id;
     return await Friending.sendRequest(user, toOid);
-  }
-
-  @Router.delete("/friend/requests/:to")
-  async removeFriendRequest(session: SessionDoc, to: string) {
-    const user = Sessioning.getUser(session);
-    const toOid = (await Authing.getUserByUsername(to))._id;
-    return await Friending.removeRequest(user, toOid);
   }
 
   @Router.put("/friend/accept/:from")
@@ -152,6 +137,110 @@ class Routes {
     const fromOid = (await Authing.getUserByUsername(from))._id;
     return await Friending.rejectRequest(fromOid, user);
   }
+
+  @Router.delete("/friends/:friend")
+  async removeFriend(session: SessionDoc, friend: string) {
+    const user = Sessioning.getUser(session);
+    const friendOid = (await Authing.getUserByUsername(friend))._id;
+    return await Friending.removeFriend(user, friendOid);
+  }
+
+  //FOLLOW
+  //
+  // Follow User
+  //
+  @Router.post("/follow")
+  async followUser(session: SessionDoc, follower: string, following: string) {
+    const followerUser = await Authing.getUserByUsername(follower);
+    const followingUser = await Authing.getUserByUsername(following);
+    return await Following.followUser(followerUser._id, followingUser._id);
+  }
+
+  // Unfollow User
+  @Router.delete("/follow/:follower/:following")
+  async unfollowUser(session: SessionDoc, follower: string, following: string) {
+    const followerUser = await Authing.getUserByUsername(follower);
+    const followingUser = await Authing.getUserByUsername(following);
+    return await Following.unfollowUser(followerUser._id, followingUser._id);
+  }
+
+  // Get Followers
+  @Router.get("/followers/:user")
+  async getFollowers(session: SessionDoc, user: string) {
+    const userObj = await Authing.getUserByUsername(user);
+    const followers = await Following.getFollowers(userObj._id);
+    return {followers};
+  }
+
+  // Get Following
+  @Router.get("/following/:user")
+  async getFollowing(session: SessionDoc, user: string) {
+    const userObj = await Authing.getUserByUsername(user);
+    const following = await Following.getFollowing(userObj._id);
+    return {following};
+  }
+
+  // Get Follower Count
+  @Router.get("/followers/count/:user")
+  async getFollowerCount(session: SessionDoc, user: string) {
+    const userObj = await Authing.getUserByUsername(user);
+    const count = await Following.getFollowerCount(userObj._id);
+    return { followerCount: count };
+  }
+
+  // // Get Follow Status
+  // @Router.post("/follow/status")
+  // async getFollowStatus(session: SessionDoc, follower: string, following: string) {
+  //   const followerUser = await Authing.getUserByUsername(follower);
+  //   const followingUser = await Authing.getUserByUsername(following);
+  //   const status = await Following.isFollowing(followerUser._id, followingUser._id);
+  //   return { isFollowing: status };
+  // }
+
+  // QUIZ
+  //
+  // BIBLE QUiz
+  //// Bible Quiz Routes
+
+  @Router.post("/quizzes")
+  async createQuiz(session: SessionDoc, { title, questions }: { title: string; questions: { question: string; options: string[]; answer: string }[] }) {
+    Sessioning.isLoggedIn(session);
+    const createdQuiz = await Quizing.createQuiz(title, questions);
+    return { msg: "Quiz created successfully!", quiz: createdQuiz.quiz };
+  }
+
+  @Router.patch("/quizzes/:id/publish")
+  async publishQuiz(session: SessionDoc, id: string) {
+    const quizId = new ObjectId(id);
+    const updatedQuiz = await Quizing.publishQuiz(quizId);
+    return { msg: "Quiz published successfully!", quiz: updatedQuiz.quiz };
+  }
+
+  @Router.post("/quizzes/:id/start")
+  async startQuiz(session: SessionDoc, id: string) {
+    const quizId = new ObjectId(id);
+    const user = Sessioning.getUser(session);
+    const result = await Quizing.startQuiz(quizId, user);
+    return { msg: "Quiz started successfully!", quizId: result.quizId, playerId: result.playerId };
+  }
+
+  @Router.post("/quizzes/:id/answer")
+  async answerQuestion(session: SessionDoc, id: string, { questionId, answer }: { questionId: string; answer: string }) {
+    const quizId = new ObjectId(id);
+    const questionObjId = new ObjectId(questionId);
+    const user = Sessioning.getUser(session);
+    const result = await Quizing.answerQuestion(quizId, user, questionObjId, answer);
+    return { msg: result.msg, isCorrect: result.isCorrect };
+  }
+
+  @Router.get("/quizzes/:id/progress")
+  async getPlayerProgress(session: SessionDoc, id: string) {
+    const quizId = new ObjectId(id);
+    const user = Sessioning.getUser(session);
+    const progress = await Quizing.getPlayerProgress(quizId, user);
+    return { msg: "Player progress fetched!", progress };
+  }
+
 }
 
 /** The web app. */

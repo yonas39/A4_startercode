@@ -78,6 +78,7 @@ export default class FriendingConcept {
     return friendships.map((friendship) => (friendship.user1.toString() === user.toString() ? friendship.user2 : friendship.user1));
   }
 
+  // Helper Private Functions
   private async addFriend(user1: ObjectId, user2: ObjectId) {
     void this.friends.createOne({ user1, user2 });
   }
@@ -116,6 +117,7 @@ export default class FriendingConcept {
   }
 }
 
+// Custom Error Messages that is desigend for friends concept
 export class FriendRequestNotFoundError extends NotFoundError {
   constructor(
     public readonly from: ObjectId,
