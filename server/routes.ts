@@ -241,6 +241,185 @@ class Routes {
     return { msg: "Player progress fetched!", progress };
   }
 
+  /**
+   * Routes for the PrayerMate concept.
+   */
+  /**
+   * Get all prayer groups.
+   */
+  @Router.get("/prayer-groups")
+  async getPrayerGroups() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Create a new prayer group.
+   */
+  @Router.post("/prayer-groups")
+  async createPrayerGroup() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Get the details of a specific prayer group by GroupID.
+   */
+  @Router.get("/prayer-groups/:id")
+  async getPrayerGroupById() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Update a specific prayer group by GroupID.
+   */
+  @Router.patch("/prayer-groups/:id")
+  async updatePrayerGroup() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Delete a specific prayer group by GroupID.
+   */
+  @Router.delete("/prayer-groups/:id")
+  async deletePrayerGroup() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Get all events in the calendar.
+   */
+  @Router.get("/events")
+  async getEvents() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Create a new event in the calendar.
+   */
+  @Router.post("/events")
+  async createEvent() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Get details of a specific event by EventID.
+   */
+  @Router.get("/events/:id")
+  async getEventById() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Update a specific event by EventID.
+   */
+  @Router.patch("/events/:id")
+  async updateEvent() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Delete a specific event by EventID.
+   */
+  @Router.delete("/events/:id")
+  async deleteEvent() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  // TOUR
+  /**
+   * Get all tours.
+   */
+  @Router.get("/tours")
+  async getTours() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Create a new tour.
+   */
+  @Router.post("/tours")
+  async createTour() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Get details of a specific tour by TourID.
+   */
+  @Router.get("/tours/:id")
+  async getTourById() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Update a specific tour by TourID.
+   */
+  @Router.patch("/tours/:id")
+  async updateTour() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Delete a specific tour by TourID.
+   */
+  @Router.delete("/tours/:id")
+  async deleteTour() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Add a participant to a tour.
+   */
+  @Router.post("/tours/:id/participants")
+  async addParticipant() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Remove a participant from a tour.
+   */
+  @Router.delete("/tours/:id/participants/:userId")
+  async removeParticipant() {
+    throw new  Error("Not implemented Yet")
+  }
+
+
+  // SESSION COUld BE USED WITH TOUR ?????????
+  /**
+   * Routes for the Session concept.
+   */
+
+  /**
+   * Get the current active sessions.
+   */
+  @Router.get("/sessions")
+  async getSessions() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Get the details of a specific session.
+   */
+  @Router.get("/sessions/:id")
+  async getSessionById() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * Start a new session.
+   */
+  @Router.post("/sessions")
+  async startSession() {
+    throw new  Error("Not implemented Yet")
+  }
+
+  /**
+   * End a session.
+   */
+  @Router.delete("/sessions/:id")
+  async endSession() {
+    throw new  Error("Not implemented Yet")
+  }
+
+
 }
 
 /** The web app. */
