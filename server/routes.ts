@@ -202,44 +202,46 @@ class Routes {
   // BIBLE QUiz
   //// Bible Quiz Routes
 
-  @Router.post("/quizzes")
-  async createQuiz(session: SessionDoc, { title, questions }: { title: string; questions: { question: string; options: string[]; answer: string }[] }) {
-    Sessioning.isLoggedIn(session);
-    const createdQuiz = await Quizing.createQuiz(title, questions);
-    return { msg: "Quiz created successfully!", quiz: createdQuiz.quiz };
-  }
+  // @Router.post("/quizzes")
+  // async createQuiz(session: SessionDoc, { title, questions }: { title: string; questions: { question: string; options: string[]; answer: string }[] }) {
+  //   Sessioning.isLoggedIn(session);
+  //   const createdQuiz = await Quizing.createQuiz(title, questions);
+  //   return { msg: "Quiz created successfully!", quiz: createdQuiz.quiz };
+  // }
 
-  @Router.patch("/quizzes/:id/publish")
-  async publishQuiz(session: SessionDoc, id: string) {
-    const quizId = new ObjectId(id);
-    const updatedQuiz = await Quizing.publishQuiz(quizId);
-    return { msg: "Quiz published successfully!", quiz: updatedQuiz.quiz };
-  }
+  // @Router.patch("/quizzes/:id/publish")
+  // async publishQuiz(session: SessionDoc, id: string) {
+  //   const quizId = new ObjectId(id);
+  //   const updatedQuiz = await Quizing.publishQuiz(quizId);
+  //   return { msg: "Quiz published successfully!", quiz: updatedQuiz.quiz };
+  // }
 
-  @Router.post("/quizzes/:id/start")
-  async startQuiz(session: SessionDoc, id: string) {
-    const quizId = new ObjectId(id);
-    const user = Sessioning.getUser(session);
-    const result = await Quizing.startQuiz(quizId, user);
-    return { msg: "Quiz started successfully!", quizId: result.quizId, playerId: result.playerId };
-  }
+  // @Router.post("/quizzes/:id/start")
+  // async startQuiz(session: SessionDoc, id: string) {
+  //   const quizId = new ObjectId(id);
+  //   const user = Sessioning.getUser(session);
+  //   const result = await Quizing.startQuiz(quizId, user);
+  //   return { msg: "Quiz started successfully!", quizId: result.quizId, playerId: result.playerId };
+  // }
 
-  @Router.post("/quizzes/:id/answer")
-  async answerQuestion(session: SessionDoc, id: string, { questionId, answer }: { questionId: string; answer: string }) {
-    const quizId = new ObjectId(id);
-    const questionObjId = new ObjectId(questionId);
-    const user = Sessioning.getUser(session);
-    const result = await Quizing.answerQuestion(quizId, user, questionObjId, answer);
-    return { msg: result.msg, isCorrect: result.isCorrect };
-  }
+  // @Router.post("/quizzes/:id/answer")
+  // async answerQuestion(session: SessionDoc, id: string, { questionId, answer }: { questionId: string; answer: string }) {
+  //   const quizId = new ObjectId(id);
+  //   const questionObjId = new ObjectId(questionId);
+  //   const user = Sessioning.getUser(session);
+  //   const result = await Quizing.answerQuestion(quizId, user, questionObjId, answer);
+  //   return { msg: result.msg, isCorrect: result.isCorrect };
+  // }
 
-  @Router.get("/quizzes/:id/progress")
-  async getPlayerProgress(session: SessionDoc, id: string) {
-    const quizId = new ObjectId(id);
-    const user = Sessioning.getUser(session);
-    const progress = await Quizing.getPlayerProgress(quizId, user);
-    return { msg: "Player progress fetched!", progress };
-  }
+  // @Router.get("/quizzes/:id/progress")
+  // async getPlayerProgress(session: SessionDoc, id: string) {
+  //   const quizId = new ObjectId(id);
+  //   const user = Sessioning.getUser(session);
+  //   const progress = await Quizing.getPlayerProgress(quizId, user);
+  //   return { msg: "Player progress fetched!", progress };
+  // }
+
+  
 
   /**
    * Routes for the PrayerMate concept.

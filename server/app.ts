@@ -1,4 +1,5 @@
 import AuthenticatingConcept from "./concepts/authenticating";
+import BibleQuizConcept from "./concepts/BibleQuizing";
 import FollowConcept from "./concepts/Following";
 import FriendingConcept from "./concepts/friending";
 import PostingConcept from "./concepts/posting";
@@ -11,4 +12,4 @@ export const Authing = new AuthenticatingConcept("users");
 export const Posting = new PostingConcept("posts");
 export const Friending = new FriendingConcept("friends");
 export const Following = new FollowConcept("followers");
-export const Quizing = new FollowConcept("bibleQuiz")
+export const Quizing = new BibleQuizConcept("bibleQuiz")
