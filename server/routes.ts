@@ -248,17 +248,35 @@ class Routes {
   //   return await Quizing.createQuiz(title, quizQuestions, user); // Use user as the creator
   // }
   @Router.post("/quizzes")
-  async createQuiz(session: SessionDoc, title: string, questionText: string, correctAnswer: string) {
+  async createQuiz(session: SessionDoc, title: string, questions: any) {
     const user = Sessioning.getUser(session);
 
-    // Construct a single question object with the given questionText and correctAnswer
-    const quizQuestions = [
-      {
-        questionID: 1, // Since it's just one question for now, we set it to 1
-        questionText: questionText,
-        correctAnswer: correctAnswer,
-      },
-    ];
+    // Check if 'questions' is already an array or a string
+    let quizQuestions;
+    if (typeof questions === "string") {
+      // Try parsing it if it's a string (this could happen if questions are sent as a JSON string)
+      try {
+        quizQuestions = JSON.parse(questions);
+      } catch (e) {
+        return { msg: "Invalid format for questions. It must be a valid JSON array." };
+      }
+    } else if (Array.isArray(questions)) {
+      quizQuestions = questions;
+    } else {
+      return { msg: "Questions must be an array or a valid JSON string." };
+    }
+
+    // Now ensure that each question has the required structure
+    quizQuestions = quizQuestions.map((q: { questionText: string; correctAnswer: string }, index: number) => {
+      if (!q.questionText || !q.correctAnswer) {
+        throw new Error("Each question must have 'questionText' and 'correctAnswer'");
+      }
+      return {
+        questionID: index + 1,
+        questionText: q.questionText,
+        correctAnswer: q.correctAnswer,
+      };
+    });
 
     return await Quizing.createQuiz(title, quizQuestions, user); // Use user._id as the creator
   }
@@ -374,16 +392,14 @@ class Routes {
     startDate: string,
     endDate: string,
     location: string,
-    attendeeIds?: string[], // This is the attendees field
+    // attendeeIds?: string[], // Optional field to allow for attendee IDs
   ) {
     const user = Sessioning.getUser(session);
 
-    // Default to an empty array if attendeeIds is not provided
-    const attendeesArray = attendeeIds ? attendeeIds.map((id) => new ObjectId(id)) : [];
+    // Call your createEvent function with the converted attendees
+    const event = await Eventing.createEvent(title, description, new Date(startDate), new Date(endDate), location);
 
-    const event = await Eventing.createEvent(title, description, new Date(startDate), new Date(endDate), location, attendeesArray);
-
-    return { msg: "Event created!", event };
+    return event;
   }
 
   // Get all events

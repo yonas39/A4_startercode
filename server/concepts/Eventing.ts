@@ -32,9 +32,34 @@ export default class EventingConcept {
     this.attendees = new DocCollection<EventAttendeeDoc>(collectionName + "_attendees");
   }
 
-  async createEvent(title: string, description: string, startDate: Date, endDate: Date, location: string, attendees: ObjectId[]) {
-    const eventId = await this.events.createOne({ title, description, startDate, endDate, location, attendees });
-    return { msg: "Event successfully created!", event: await this.events.readOne({ _id: eventId }) };
+  // Method to create an event
+  async createEvent(title: string, description: string, startDate: Date, endDate: Date, location: string) {
+    const existingEvent = await this.events.readOne({
+      title,
+      description,
+      startDate,
+      endDate,
+      location,
+    });
+
+    if (existingEvent) {
+      throw new EventAlreadyExists(existingEvent._id);
+    }
+
+    // First, create the event without attendees
+    const eventId = await this.events.createOne({
+      title,
+      description,
+      startDate,
+      endDate,
+      location,
+      // attendees: [], // Attendees will be added afterward using addAttendee
+    });
+
+    return {
+      msg: "Event successfully created!",
+      event: await this.events.readOne({ _id: eventId }),
+    };
   }
 
   async getEvents() {
@@ -66,8 +91,13 @@ export default class EventingConcept {
 
   async addAttendee(eventId: ObjectId, attendee: ObjectId) {
     await this.assertEventExists(eventId);
+    const existingAttendee = await this.attendees.readOne({ eventId, attendee });
+    if (existingAttendee) {
+      throw new AttendeeIsAlreadyInTheEvent(eventId, attendee);
+    }
     await this.attendees.createOne({ eventId, attendee, status: "going" });
-    return { msg: "Attendee added!" };
+    await this.events.partialUpdateOne({ _id: eventId }, { attendees: [attendee] });
+    return { msg: "Attendee added to the event!" };
   }
 
   async removeAttendee(eventId: ObjectId, attendee: ObjectId) {
@@ -109,7 +139,20 @@ export class EventNotFoundError extends NotFoundError {
     super(`Event ${eventId} does not exist!`);
   }
 }
+export class EventAlreadyExists extends NotFoundError {
+  constructor(public readonly eventId: ObjectId) {
+    super(`Event ${eventId} Already exist!`);
+  }
+}
 
+export class AttendeeIsAlreadyInTheEvent extends NotFoundError {
+  constructor(
+    public readonly eventId: ObjectId,
+    public readonly attendee: ObjectId,
+  ) {
+    super(`Attendee ${attendee} already exists for event ${eventId}!`);
+  }
+}
 export class AttendeeNotFoundError extends NotFoundError {
   constructor(
     public readonly eventId: ObjectId,

@@ -266,7 +266,7 @@ const operations: Operation[] = [
       startDate: "input",
       endDate: "input",
       location: "input",
-      attendees: { attendeeIds: "json" },
+      // attendees: { attendeeIds: "input" },
     },
   },
   {
@@ -292,7 +292,7 @@ const operations: Operation[] = [
       startDate: "input",
       endDate: "input",
       location: "input",
-      attendees: { attendeeIds: "json" },
+      // attendees: { attendeeIds: "json" },
     },
   },
   {
