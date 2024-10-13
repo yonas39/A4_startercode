@@ -2,12 +2,12 @@ import { ObjectId } from "mongodb";
 import DocCollection, { BaseDoc } from "../framework/doc";
 import { NotAllowedError, NotFoundError } from "./errors";
 
-NotAllowedError
-NotFoundError
-export interface FollowDoc extends BaseDoc{
-  follower :  ObjectId ;  // The user who is following
-  following : ObjectId ; // The user who is followed
-  status: "active" | "blocked"  //Status of the following
+NotAllowedError;
+NotFoundError;
+export interface FollowDoc extends BaseDoc {
+  follower: ObjectId; // The user who is following
+  following: ObjectId; // The user who is followed
+  status: "active" | "blocked"; //Status of the following
 }
 
 export default class FollowConcept {
@@ -26,7 +26,9 @@ export default class FollowConcept {
    */
   async getFollowers(user: ObjectId): Promise<ObjectId[]> {
     const followers = await this.follows.readMany({
-      following: user,
+      // $or: [{ user1: user }, { user2: user }],
+      $or: [{ follower: user }, { following: user }],
+      // following: user,
       status: "active",
     });
     return followers.map((follow) => follow.follower);
@@ -117,7 +119,6 @@ export default class FollowConcept {
     }
   }
 }
-
 
 // Custom Error Messages designed for the follow concept
 export class FollowNotFoundError extends NotFoundError {

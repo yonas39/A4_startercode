@@ -2,186 +2,122 @@ import { ObjectId } from "mongodb";
 import DocCollection, { BaseDoc } from "../framework/doc";
 import { NotAllowedError, NotFoundError } from "./errors";
 
-/**
- * Interface for a Question Document
- */
-interface QuestionDoc extends BaseDoc {
-  quizId: ObjectId;
-  question: string;
-  options: string[];
-  answer: string;
-}
-
-/**
- * Interface for a Quiz Document
- */
-export interface QuizDoc extends BaseDoc {
+interface QuizDoc extends BaseDoc {
   title: string;
-  questions: ObjectId[];
-  status: "published" | "unpublished";
+  questions: QuestionDoc[];
+  creator: ObjectId;
+}
+
+interface QuestionDoc {
+  questionID: number;
+  questionText: string;
+  correctAnswer: string;
+}
+
+interface UserQuizRecordDoc extends BaseDoc {
+  user: ObjectId;
+  quizID: ObjectId;
+  score: number;
+  progress: number;
 }
 
 /**
- * Interface for a Player's Progress in a Quiz
- */
-export interface PlayerProgressDoc extends BaseDoc {
-  quizId: ObjectId;
-  playerId: ObjectId;
-  answeredQuestions: ObjectId[];
-}
-
-/**
- * Concept: BibleQuiz [User]
- * Manages the creation, publication, and player progress tracking for Bible quizzes.
+ * concept: BibleQuiz [User]
  */
 export default class BibleQuizConcept {
   public readonly quizzes: DocCollection<QuizDoc>;
-  public readonly questions: DocCollection<QuestionDoc>;
-  public readonly progress: DocCollection<PlayerProgressDoc>;
+  public readonly userQuizRecords: DocCollection<UserQuizRecordDoc>;
 
   /**
-   * Make an instance of BibleQuizConcept.
+   * Make an instance of BibleQuiz.
    */
   constructor(collectionName: string) {
     this.quizzes = new DocCollection<QuizDoc>(collectionName + "_quizzes");
-    this.questions = new DocCollection<QuestionDoc>(collectionName + "_questions");
-    this.progress = new DocCollection<PlayerProgressDoc>(collectionName + "_progress");
+    this.userQuizRecords = new DocCollection<UserQuizRecordDoc>(collectionName + "_userQuizRecords");
   }
 
-  /**
-   * Create a new quiz with a set of questions.
-   */
-  async createQuiz(title: string, questionList: { question: string; options: string[]; answer: string }[]): Promise<{ msg: string; quiz: QuizDoc }> {
-    // Create questions and get their ObjectIds
-    const questionIds = await Promise.all(
-      questionList.map(async (q) => {
-        const questionDocId = await this.questions.createOne({
-          quizId: new ObjectId(), // Temporary quizId; will be updated after quiz creation
-          question: q.question,
-          options: q.options,
-          answer: q.answer,
-        });
-        return questionDocId;
-      })
-    );
+  async createQuiz(title: string, questions: QuestionDoc[], creator: ObjectId) {
+    const quizID = await this.quizzes.createOne({ title, questions, creator });
+    return { msg: "Quiz successfully created!", quiz: await this.quizzes.readOne({ _id: quizID }) };
+  }
 
-    // Create the quiz with the title and the created question IDs
-    const quizId = await this.quizzes.createOne({ title, questions: questionIds, status: "unpublished" });
+  async getQuizzes() {
+    return await this.quizzes.readMany({});
+  }
 
-    // Update each question with the correct quizId
-    await Promise.all(
-      questionIds.map((qId) => this.questions.partialUpdateOne({ _id: qId }, { quizId }))
-    );
+  async getQuiz(_id: ObjectId) {
+    await this.assertQuizExists(_id);
+    return await this.quizzes.readOne({ _id });
+  }
 
-    const quiz = await this.quizzes.readOne({ _id: quizId });
+  async startQuiz(user: ObjectId, quizID: ObjectId) {
+    await this.assertQuizExists(quizID);
+    const existingRecord = await this.userQuizRecords.readOne({ user, quizID });
+    if (existingRecord) {
+      throw new NotAllowedError(`User ${user} has already started this quiz.`);
+    }
+    await this.userQuizRecords.createOne({ user, quizID, score: 0, progress: 0 });
+    return { msg: "Quiz started!" };
+  }
 
-    // If quiz is null, this indicates a problem after updating the document.
+  async answerQuestion(user: ObjectId, quizID: ObjectId, questionID: number, selectedAnswer: string) {
+    const quiz = await this.getQuiz(quizID);
     if (!quiz) {
-      throw new QuizNotFoundError(quizId);
+      throw new NotFoundError(`Quiz ${quizID} not found`);
+    }
+    const question = quiz.questions.find((q) => q.questionID === questionID);
+    if (!question) {
+      throw new NotFoundError(`Question ${questionID} not found in quiz ${quizID}`);
     }
 
-    return { msg: "Quiz published!", quiz };
+    const correct = question.correctAnswer.toLowerCase() === selectedAnswer.toLowerCase();
+    const userRecord = await this.userQuizRecords.readOne({ user, quizID });
+    if (!userRecord) {
+      throw new NotAllowedError(`User ${user} has not started the quiz ${quizID}`);
+    }
+
+    const score = correct ? userRecord.score + 1 : userRecord.score;
+    const progress = ((userRecord.progress + 1) / quiz.questions.length) * 100;
+    await this.userQuizRecords.partialUpdateOne({ user, quizID }, { score, progress });
+
+    return { msg: "Answered question!", correct, progress, score };
   }
 
-  /**
-   * Publish a quiz so that users can play it.
-   */
-  async publishQuiz(quizId: ObjectId): Promise<{ msg: string; quiz: QuizDoc }> {
-    const result = await this.quizzes.partialUpdateOne({ _id: quizId }, { status: "published" });
-    if (result.modifiedCount === 0) throw new QuizNotFoundError(quizId);
-    const quiz = await this.quizzes.readOne({ _id: quizId });
+  async getQuizLeaderboard(quizID: ObjectId) {
+    await this.assertQuizExists(quizID);
+    const records = await this.userQuizRecords.readMany({ quizID });
+    const leaderboard = records.sort((a, b) => b.score - a.score).map((record) => ({ user: record.user, score: record.score }));
+    return { msg: "Leaderboard fetched!", leaderboard };
+  }
 
-    // If quiz is null, this indicates a problem after updating the document.
+  async getPlayerProgress(quizID: ObjectId, user: ObjectId) {
+    const userRecord = await this.userQuizRecords.readOne({ user, quizID });
+    if (!userRecord) {
+      throw new NotFoundError(`User ${user} has not started the quiz ${quizID}`);
+    }
+    const quiz = await this.getQuiz(quizID);
     if (!quiz) {
-      throw new QuizNotFoundError(quizId);
+      throw new NotFoundError(`Quiz ${quizID} not found`);
     }
-
-    return { msg: "Quiz published!", quiz };
+    return {
+      msg: "Player progress fetched!",
+      progress: userRecord.progress,
+      score: userRecord.score,
+      totalQuestions: quiz.questions.length,
+    };
   }
 
-  /**
-   * Get a list of quizzes based on their status.
-   */
-  async getQuizzesByStatus(status: "published" | "unpublished"): Promise<QuizDoc[]> {
-    return await this.quizzes.readMany({ status });
-  }
-
-  /**
-   * Start playing a quiz by initializing player's progress.
-   */
-  async startQuiz(quizId: ObjectId, playerId: ObjectId): Promise<{ msg: string; quizId: ObjectId; playerId: ObjectId }> {
-    const quiz = await this.quizzes.readOne({ _id: quizId, status: "published" });
-    if (quiz === null) throw new QuizNotFoundError(quizId);
-
-    // Initialize player progress
-    await this.progress.createOne({ quizId, playerId, answeredQuestions: [] });
-    return { msg: "Started quiz!", quizId, playerId };
-  }
-
-  /**
-   * Record an answer for a player in a given quiz.
-   */
-  async answerQuestion(quizId: ObjectId, playerId: ObjectId, questionId: ObjectId, answer: string): Promise<{ msg: string; isCorrect: boolean }> {
-    const question = await this.questions.readOne({ _id: questionId });
-    if (question === null) throw new QuestionNotFoundError(questionId);
-
-    const progress = await this.progress.readOne({ quizId, playerId });
-    if (progress === null) throw new PlayerProgressNotFoundError(playerId, quizId);
-
-    // Check if question has already been answered
-    if (progress.answeredQuestions.includes(questionId)) {
-      throw new QuestionAlreadyAnsweredError(questionId, playerId);
-    }
-
-    // Update player progress by adding the answered question
-    await this.progress.partialUpdateOne({ quizId, playerId }, { answeredQuestions: [...progress.answeredQuestions, questionId] });
-
-    // Check if the answer is correct
-    const isCorrect = question.answer === answer;
-    return { msg: isCorrect ? "Correct answer!" : "Incorrect answer.", isCorrect };
-  }
-
-  /**
-   * Get the player's progress for a given quiz.
-   */
-  async getPlayerProgress(quizId: ObjectId, playerId: ObjectId): Promise<{ msg: string; progress: PlayerProgressDoc }> {
-    const progress = await this.progress.readOne({ quizId, playerId });
-    if (progress === null) throw new PlayerProgressNotFoundError(playerId, quizId);
-
-    // Return progress details along with the list of answered questions
-    return { msg: "Progress fetched!", progress };
-  }
-
-  // Helper Private Functions
-  private async assertQuizExists(quizId: ObjectId): Promise<void> {
-    const quiz = await this.quizzes.readOne({ _id: quizId });
-    if (quiz === null) {
-      throw new QuizNotFoundError(quizId);
+  // Helper Methods
+  private async assertQuizExists(_id: ObjectId) {
+    const quiz = await this.quizzes.readOne({ _id });
+    if (!quiz) {
+      throw new QuizNotFoundError(_id);
     }
   }
 }
 
-// Custom Error Messages designed for BibleQuiz concept
 export class QuizNotFoundError extends NotFoundError {
-  constructor(public readonly quizId: ObjectId) {
-    super(`Quiz with ID ${quizId} does not exist!`, quizId);
-  }
-}
-
-export class QuestionNotFoundError extends NotFoundError {
-  constructor(public readonly questionId: ObjectId) {
-    super(`Question with ID ${questionId} does not exist!`, questionId);
-  }
-}
-
-export class PlayerProgressNotFoundError extends NotFoundError {
-  constructor(public readonly playerId: ObjectId, public readonly quizId: ObjectId) {
-    super(`Player progress for player ${playerId} in quiz ${quizId} does not exist!`, playerId, quizId);
-  }
-}
-
-export class QuestionAlreadyAnsweredError extends NotAllowedError {
-  constructor(public readonly questionId: ObjectId, public readonly playerId: ObjectId) {
-    super(`Question ${questionId} has already been answered by player ${playerId}!`, questionId, playerId);
+  constructor(public readonly quizID: ObjectId) {
+    super(`Quiz ${quizID} does not exist!`);
   }
 }

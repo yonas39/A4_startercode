@@ -42,17 +42,44 @@ export default class EventingConcept {
   }
 
   async getEvent(_id: ObjectId) {
+    await this.assertEventExists(_id);
     return await this.events.readOne({ _id });
   }
 
   async updateEvent(_id: ObjectId, title?: string, description?: string, startDate?: Date, endDate?: Date, location?: string, attendees?: ObjectId[]) {
+    await this.assertEventExists(_id);
     await this.events.partialUpdateOne({ _id }, { title, description, startDate, endDate, location, attendees });
     return { msg: "Event successfully updated!" };
   }
 
   async deleteEvent(_id: ObjectId) {
+    await this.assertEventExists(_id);
     await this.events.deleteOne({ _id });
     return { msg: "Event deleted successfully!" };
+  }
+
+  async getEventAttendees(eventId: ObjectId) {
+    await this.assertEventExists(eventId);
+    const attendees = await this.attendees.readMany({ eventId });
+    return attendees.map((attendee) => attendee.attendee);
+  }
+
+  async addAttendee(eventId: ObjectId, attendee: ObjectId) {
+    await this.assertEventExists(eventId);
+    await this.attendees.createOne({ eventId, attendee, status: "going" });
+    return { msg: "Attendee added!" };
+  }
+
+  async removeAttendee(eventId: ObjectId, attendee: ObjectId) {
+    await this.assertAttendeeExists(eventId, attendee);
+    await this.attendees.deleteOne({ eventId, attendee });
+    return { msg: "Attendee removed!" };
+  }
+
+  async updateAttendeeStatus(eventId: ObjectId, attendee: ObjectId, status: "going" | "not going" | "maybe") {
+    await this.assertAttendeeExists(eventId, attendee);
+    await this.attendees.partialUpdateOne({ eventId, attendee }, { status });
+    return { msg: "Attendee status updated!" };
   }
 
   async getAttendees(eventId: ObjectId) {
@@ -60,50 +87,19 @@ export default class EventingConcept {
     return attendees.map((attendee) => attendee.attendee);
   }
 
-  async getEventAttendee(eventId: ObjectId, attendee: ObjectId) {
-    return await this.attendees.readOne({ eventId, attendee });
-  }
+  // Helper Methods
 
-  async addAttendee(eventId: ObjectId, attendee: ObjectId) {
-    await this.attendees.createOne({ eventId, attendee, status: "going" });
-    return { msg: "Attendee added!" };
-  }
-
-  async removeAttendee(eventId: ObjectId, attendee: ObjectId) {
-    await this.attendees.deleteOne({ eventId, attendee });
-    return { msg: "Attendee removed!" };
-  }
-
-  async updateAttendeeStatus(eventId: ObjectId, attendee: ObjectId, status: "going" | "not going" | "maybe") {
-    await this.attendees.partialUpdateOne({ eventId, attendee }, { status });
-    return { msg: "Attendee status updated!" };
-  }
-
-  async assertEventExists(_id: ObjectId) {
+  private async assertEventExists(_id: ObjectId) {
     const event = await this.events.readOne({ _id });
     if (!event) {
-      throw new NotFoundError(`Event ${_id} does not exist!`);
+      throw new EventNotFoundError(_id);
     }
   }
 
-  async assertAttendeeExists(eventId: ObjectId, attendee: ObjectId) {
+  private async assertAttendeeExists(eventId: ObjectId, attendee: ObjectId) {
     const attendeeDoc = await this.attendees.readOne({ eventId, attendee });
     if (!attendeeDoc) {
-      throw new NotFoundError(`Attendee ${attendee} does not exist for event ${eventId}!`);
-    }
-  }
-
-  async assertAttendeeIsUser(eventId: ObjectId, attendee: ObjectId) {
-    const attendeeDoc = await this.attendees.readOne({ eventId, attendee });
-    if (!attendeeDoc) {
-      throw new NotFoundError(`Attendee ${attendee} does not exist for event ${eventId}!`);
-    }
-  }
-
-  async assertAttendeeStatus(eventId: ObjectId, attendee: ObjectId, status: "going" | "not going" | "maybe") {
-    const attendeeDoc = await this.attendees.readOne({ eventId, attendee });
-    if (!attendeeDoc || attendeeDoc.status !== status) {
-      throw new NotAllowedError(`Attendee ${attendee} is not ${status} for event ${eventId}!`);
+      throw new AttendeeNotFoundError(eventId, attendee);
     }
   }
 }

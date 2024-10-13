@@ -153,46 +153,220 @@ const operations: Operation[] = [
     fields: { follower: "input", following: "input" },
   },
 
-  //
-  //
+  // PrayerMate Operations
+  {
+    name: "Create Prayer Group",
+    endpoint: "/api/prayer-group",
+    method: "POST",
+    fields: { title: "input", topic: "input" },
+  },
+  {
+    name: "Join Prayer Group",
+    endpoint: "/api/prayer-group/join/:groupID",
+    method: "PUT",
+    fields: { groupID: "input" },
+  },
+  {
+    name: "Leave Prayer Group",
+    endpoint: "/api/prayer-group/leave/:groupID",
+    method: "PUT",
+    fields: { groupID: "input" },
+  },
+  {
+    name: "Start Prayer Session",
+    endpoint: "/api/prayer-session/start/:groupID",
+    method: "POST",
+    fields: { groupID: "input" },
+  },
+  {
+    name: "End Prayer Session",
+    endpoint: "/api/prayer-session/end/:groupID",
+    method: "PUT",
+    fields: { groupID: "input" },
+  },
+  {
+    name: "Get Group Members",
+    endpoint: "/api/prayer-group/members/:groupID",
+    method: "GET",
+    fields: { groupID: "input" },
+  },
+  {
+    name: "Get All Active Prayer Sessions",
+    endpoint: "/api/prayer-sessions/active",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "Get Active Prayer Session for Group",
+    endpoint: "/api/prayer-session/active/:groupID",
+    method: "GET",
+    fields: { groupID: "input" },
+  },
+  {
+    name: "Get Prayer Group Details",
+    endpoint: "/api/prayer-group/:groupID",
+    method: "GET",
+    fields: { groupID: "input" },
+  },
+  {
+    name: "Get Prayer Session Details",
+    endpoint: "/api/prayer-session/:sessionID",
+    method: "GET",
+    fields: { sessionID: "input" },
+  },
+
   // Quiz-related operations
   {
     name: "Create Quiz",
     endpoint: "/api/quizzes",
     method: "POST",
     fields: {
-      title: "input",
-      questions: {
-        question: "input",
-        options: "json",
-        answer: "input"
-      }
-    }
-  },
-  {
-    name: "Publish Quiz",
-    endpoint: "/api/quizzes/:id/publish",
-    method: "PATCH",
-    fields: { id: "input" }
+      title: "input", // Single string input for title
+      questionText: "input", // Single string input for the question text
+      correctAnswer: "input", // Single string input for the correct answer
+    },
   },
   {
     name: "Start Quiz",
-    endpoint: "/api/quizzes/:id/start",
+    endpoint: "/api/quizzes/:quizID/start",
     method: "POST",
-    fields: { id: "input" }
+    fields: { quizID: "input" }, // Input for quizID to start the quiz
   },
   {
     name: "Answer Question",
-    endpoint: "/api/quizzes/:id/answer",
+    endpoint: "/api/quizzes/:quizID/answer/:questionID",
     method: "POST",
-    fields: { id: "input", questionId: "input", answer: "input" }
+    fields: {
+      quizID: "input", // Input for quizID
+      questionID: "input", // Input for questionID
+      selectedAnswer: "input", // Single string input for the answer
+    },
   },
   {
     name: "Get Player Progress",
-    endpoint: "/api/quizzes/:id/progress",
+    endpoint: "/api/quizzes/:quizID/progress",
     method: "GET",
-    fields: { id: "input" }
-  }
+    fields: { quizID: "input" }, // Input for quizID to get the user's progress
+  },
+  {
+    name: "View Quiz Leaderboard",
+    endpoint: "/api/quizzes/:quizID/leaderboard",
+    method: "GET",
+    fields: { quizID: "input" }, // Input for quizID to view leaderboard
+  },
+
+  // Eventing Operations
+  {
+    name: "Create Event",
+    endpoint: "/api/events",
+    method: "POST",
+    fields: {
+      title: "input",
+      description: "textarea",
+      startDate: "input",
+      endDate: "input",
+      location: "input",
+      attendees: { attendeeIds: "json" },
+    },
+  },
+  {
+    name: "Get Events",
+    endpoint: "/api/events",
+    method: "GET",
+    fields: {},
+  },
+  {
+    name: "Get Event",
+    endpoint: "/api/events/:eventId",
+    method: "GET",
+    fields: { eventId: "input" },
+  },
+  {
+    name: "Update Event",
+    endpoint: "/api/events/:eventId",
+    method: "PATCH",
+    fields: {
+      eventId: "input",
+      title: "input",
+      description: "textarea",
+      startDate: "input",
+      endDate: "input",
+      location: "input",
+      attendees: { attendeeIds: "json" },
+    },
+  },
+  {
+    name: "Delete Event",
+    endpoint: "/api/events/:eventId",
+    method: "DELETE",
+    fields: { eventId: "input" },
+  },
+  {
+    name: "Get Event Attendees",
+    endpoint: "/api/events/:eventId/attendees",
+    method: "GET",
+    fields: { eventId: "input" },
+  },
+  {
+    name: "Add Attendee to Event",
+    endpoint: "/api/events/:eventId/attendees",
+    method: "POST",
+    fields: { eventId: "input", attendeeId: "input" },
+  },
+  {
+    name: "Remove Attendee from Event",
+    endpoint: "/api/events/:eventId/attendees/:attendeeId",
+    method: "DELETE",
+    fields: { eventId: "input", attendeeId: "input" },
+  },
+  {
+    name: "Update Attendee Status",
+    endpoint: "/api/events/:eventId/attendees/:attendeeId",
+    method: "PATCH",
+    fields: { eventId: "input", attendeeId: "input", status: "input" },
+  },
+
+  // PilgrimageTouring Operations
+  {
+    name: "Create Pilgrimage Tour",
+    endpoint: "/api/pilgrimage-tour",
+    method: "POST",
+    fields: {
+      title: "input",
+      description: "textarea",
+      location: "input",
+    },
+  },
+  {
+    name: "Start Pilgrimage Tour",
+    endpoint: "/api/pilgrimage-tour/:tourID/start",
+    method: "POST",
+    fields: { tourID: "input" },
+  },
+  {
+    name: "Join Group Pilgrimage Tour",
+    endpoint: "/api/pilgrimage-tour/:tourID/join",
+    method: "POST",
+    fields: { tourID: "input" },
+  },
+  {
+    name: "View Pilgrimage Tour Details",
+    endpoint: "/api/pilgrimage-tour/:tourID",
+    method: "GET",
+    fields: { tourID: "input" },
+  },
+  {
+    name: "Leave Pilgrimage Tour",
+    endpoint: "/api/pilgrimage-tour/:tourID/leave",
+    method: "POST",
+    fields: { tourID: "input" },
+  },
+  {
+    name: "Get All Pilgrimage Tours",
+    endpoint: "/api/pilgrimage-tours",
+    method: "GET",
+    fields: {},
+  },
 ];
 
 /*

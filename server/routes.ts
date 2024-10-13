@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 
 import { getExpressRouter, Router } from "./framework/router";
 
-import { Authing, Following, Friending, Posting, Quizing, Sessioning } from "./app";
+import { Authing, Eventing, Following, Friending, Posting, prayerMate, Quizing, Sessioning, Touring } from "./app";
 import { PostOptions } from "./concepts/posting";
 import { SessionDoc } from "./concepts/sessioning";
 import Responses from "./responses";
@@ -106,9 +106,7 @@ class Routes {
     return Posting.delete(oid);
   }
 
-
   // FRIENDS
-  //
   // Friending routes
   //
   @Router.get("/friends")
@@ -145,8 +143,7 @@ class Routes {
     return await Friending.removeFriend(user, friendOid);
   }
 
-  //FOLLOW
-  //
+  //FOLLOWING
   // Follow User
   //
   @Router.post("/follow")
@@ -169,7 +166,7 @@ class Routes {
   async getFollowers(session: SessionDoc, user: string) {
     const userObj = await Authing.getUserByUsername(user);
     const followers = await Following.getFollowers(userObj._id);
-    return {followers};
+    return { followers };
   }
 
   // Get Following
@@ -177,7 +174,7 @@ class Routes {
   async getFollowing(session: SessionDoc, user: string) {
     const userObj = await Authing.getUserByUsername(user);
     const following = await Following.getFollowing(userObj._id);
-    return {following};
+    return { following };
   }
 
   // Get Follower Count
@@ -188,240 +185,317 @@ class Routes {
     return { followerCount: count };
   }
 
-  // // Get Follow Status
-  // @Router.post("/follow/status")
-  // async getFollowStatus(session: SessionDoc, follower: string, following: string) {
-  //   const followerUser = await Authing.getUserByUsername(follower);
-  //   const followingUser = await Authing.getUserByUsername(following);
-  //   const status = await Following.isFollowing(followerUser._id, followingUser._id);
-  //   return { isFollowing: status };
-  // }
+  // Get Follow Status
+  @Router.post("/follow/status")
+  async getFollowStatus(session: SessionDoc, follower: string, following: string) {
+    const followerUser = await Authing.getUserByUsername(follower);
+    const followingUser = await Authing.getUserByUsername(following);
+    const status = await Following.getFollowStatus(followerUser._id, followingUser._id);
+    return { isFollowing: status };
+  }
 
-  // QUIZ
-  //
-  // BIBLE QUiz
-  //// Bible Quiz Routes
-
+  // // BIBLE QUIZ
+  // // BibleQuiz routes
   // @Router.post("/quizzes")
-  // async createQuiz(session: SessionDoc, { title, questions }: { title: string; questions: { question: string; options: string[]; answer: string }[] }) {
-  //   Sessioning.isLoggedIn(session);
-  //   const createdQuiz = await Quizing.createQuiz(title, questions);
-  //   return { msg: "Quiz created successfully!", quiz: createdQuiz.quiz };
-  // }
-
-  // @Router.patch("/quizzes/:id/publish")
-  // async publishQuiz(session: SessionDoc, id: string) {
-  //   const quizId = new ObjectId(id);
-  //   const updatedQuiz = await Quizing.publishQuiz(quizId);
-  //   return { msg: "Quiz published successfully!", quiz: updatedQuiz.quiz };
-  // }
-
-  // @Router.post("/quizzes/:id/start")
-  // async startQuiz(session: SessionDoc, id: string) {
-  //   const quizId = new ObjectId(id);
+  // async createQuiz(session: SessionDoc, title: string, questions: { questionText: string; options: string[]; correctAnswer: string }[]) {
   //   const user = Sessioning.getUser(session);
-  //   const result = await Quizing.startQuiz(quizId, user);
-  //   return { msg: "Quiz started successfully!", quizId: result.quizId, playerId: result.playerId };
+  //   // const creator = user._id;
+
+  //   const quizQuestions = questions.map((q, index) => ({
+  //     questionID: index + 1,
+  //     questionText: q.questionText,
+  //     options: q.options,
+  //     correctAnswer: q.correctAnswer,
+  //   }));
+
+  //   return await Quizing.createQuiz(title, quizQuestions, user);
   // }
 
-  // @Router.post("/quizzes/:id/answer")
-  // async answerQuestion(session: SessionDoc, id: string, { questionId, answer }: { questionId: string; answer: string }) {
-  //   const quizId = new ObjectId(id);
-  //   const questionObjId = new ObjectId(questionId);
+  // @Router.post("/quizzes/:quizID/start")
+  // async startQuiz(session: SessionDoc, quizID: string) {
   //   const user = Sessioning.getUser(session);
-  //   const result = await Quizing.answerQuestion(quizId, user, questionObjId, answer);
-  //   return { msg: result.msg, isCorrect: result.isCorrect };
+  //   return await Quizing.startQuiz(user, new ObjectId(quizID));
   // }
 
-  // @Router.get("/quizzes/:id/progress")
-  // async getPlayerProgress(session: SessionDoc, id: string) {
-  //   const quizId = new ObjectId(id);
+  // @Router.post("/quizzes/:quizID/answer/:questionID")
+  // async answerQuestion(session: SessionDoc, quizID: string, questionID: string, selectedOption: string) {
   //   const user = Sessioning.getUser(session);
-  //   const progress = await Quizing.getPlayerProgress(quizId, user);
-  //   return { msg: "Player progress fetched!", progress };
+  //   return await Quizing.answerQuestion(user, new ObjectId(quizID), Number(questionID), selectedOption);
   // }
 
-  
+  // @Router.get("/quizzes/:quizID/progress")
+  // async getPlayerProgress(session: SessionDoc, quizID: string) {
+  //   const user = Sessioning.getUser(session);
+  //   return await Quizing.getPlayerProgress(new ObjectId(quizID), user);
+  // }
 
-  /**
-   * Routes for the PrayerMate concept.
-   */
-  /**
-   * Get all prayer groups.
-   */
-  @Router.get("/prayer-groups")
-  async getPrayerGroups() {
-    throw new  Error("Not implemented Yet")
+  // @Router.get("/quizzes/:quizID/leaderboard")
+  // async viewQuizLeaderboard(session: SessionDoc, quizID: string) {
+  //   return await Quizing.viewQuizLeaderboard(new ObjectId(quizID));
+  // }
+  // BIBLE QUIZ
+  // BibleQuiz routes
+  // @Router.post("/quizzes")
+  // async createQuiz(session: SessionDoc, title: string, questions: { questionText: string; correctAnswer: string }[]) {
+  //   const user = Sessioning.getUser(session);
+
+  //   const quizQuestions = questions.map((q, index) => ({
+  //     questionID: index + 1, // Auto-increment the question ID
+  //     questionText: q.questionText,
+  //     correctAnswer: q.correctAnswer, // No options, just the correct answer
+  //   }));
+
+  //   return await Quizing.createQuiz(title, quizQuestions, user); // Use user as the creator
+  // }
+  @Router.post("/quizzes")
+  async createQuiz(session: SessionDoc, title: string, questionText: string, correctAnswer: string) {
+    const user = Sessioning.getUser(session);
+
+    // Construct a single question object with the given questionText and correctAnswer
+    const quizQuestions = [
+      {
+        questionID: 1, // Since it's just one question for now, we set it to 1
+        questionText: questionText,
+        correctAnswer: correctAnswer,
+      },
+    ];
+
+    return await Quizing.createQuiz(title, quizQuestions, user); // Use user._id as the creator
   }
 
-  /**
-   * Create a new prayer group.
-   */
-  @Router.post("/prayer-groups")
-  async createPrayerGroup() {
-    throw new  Error("Not implemented Yet")
+  @Router.post("/quizzes/:quizID/start")
+  async startQuiz(session: SessionDoc, quizID: string) {
+    const user = Sessioning.getUser(session);
+    return await Quizing.startQuiz(user, new ObjectId(quizID)); // Use user
   }
 
-  /**
-   * Get the details of a specific prayer group by GroupID.
-   */
-  @Router.get("/prayer-groups/:id")
-  async getPrayerGroupById() {
-    throw new  Error("Not implemented Yet")
+  @Router.post("/quizzes/:quizID/answer/:questionID")
+  async answerQuestion(session: SessionDoc, quizID: string, questionID: string, selectedAnswer: string) {
+    const user = Sessioning.getUser(session);
+    return await Quizing.answerQuestion(user, new ObjectId(quizID), Number(questionID), selectedAnswer);
   }
 
-  /**
-   * Update a specific prayer group by GroupID.
-   */
-  @Router.patch("/prayer-groups/:id")
-  async updatePrayerGroup() {
-    throw new  Error("Not implemented Yet")
+  @Router.get("/quizzes/:quizID/progress")
+  async getPlayerProgress(session: SessionDoc, quizID: string) {
+    const user = Sessioning.getUser(session);
+    return await Quizing.getPlayerProgress(new ObjectId(quizID), user); // Use user
   }
 
-  /**
-   * Delete a specific prayer group by GroupID.
-   */
-  @Router.delete("/prayer-groups/:id")
-  async deletePrayerGroup() {
-    throw new  Error("Not implemented Yet")
+  @Router.get("/quizzes/:quizID/leaderboard")
+  async viewQuizLeaderboard(session: SessionDoc, quizID: string) {
+    return await Quizing.getQuizLeaderboard(new ObjectId(quizID));
   }
 
-  /**
-   * Get all events in the calendar.
-   */
+  // PRAYER MATE
+  // Prayer group and session routes
+
+  // Create a new prayer group
+  @Router.post("/prayer-group")
+  async createPrayerGroup(session: SessionDoc, title: string, topic: string) {
+    const leader = Sessioning.getUser(session);
+    const group = await prayerMate.createPrayerGroup(leader, title, topic);
+    return { msg: "Prayer group created successfully!", group };
+  }
+
+  // Join a prayer group
+  @Router.put("/prayer-group/join/:groupID")
+  async joinPrayerGroup(session: SessionDoc, groupID: string) {
+    const user = Sessioning.getUser(session);
+    const groupOid = new ObjectId(groupID);
+    return await prayerMate.joinPrayerGroup(user, groupOid);
+  }
+
+  // Leave a prayer group
+  @Router.put("/prayer-group/leave/:groupID")
+  async leavePrayerGroup(session: SessionDoc, groupID: string) {
+    const user = Sessioning.getUser(session);
+    const groupOid = new ObjectId(groupID);
+    return await prayerMate.leavePrayerGroup(user, groupOid);
+  }
+
+  // Start a prayer session for a group
+  @Router.post("/prayer-session/start/:groupID")
+  async startPrayerSession(session: SessionDoc, groupID: string) {
+    const groupOid = new ObjectId(groupID);
+    return await prayerMate.startPrayerSession(groupOid);
+  }
+
+  // End a prayer session for a group
+  @Router.put("/prayer-session/end/:groupID")
+  async endPrayerSession(session: SessionDoc, groupID: string) {
+    const groupOid = new ObjectId(groupID);
+    return await prayerMate.endPrayerSession(groupOid);
+  }
+
+  // Get members of a prayer group
+  @Router.get("/prayer-group/members/:groupID")
+  async getGroupMembers(session: SessionDoc, groupID: string) {
+    const groupOid = new ObjectId(groupID);
+    return await prayerMate.getGroupMembers(groupOid);
+  }
+
+  // Fetch all active prayer sessions
+  @Router.get("/prayer-sessions/active")
+  async getAllActiveSessions() {
+    const activeSessions = await prayerMate.getAllActiveSessions();
+    return { msg: "Active prayer sessions", activeSessions };
+  }
+
+  // Get active prayer session for a specific group
+  @Router.get("/prayer-session/active/:groupID")
+  async getActiveSession(session: SessionDoc, groupID: string) {
+    const groupOid = new ObjectId(groupID);
+    return await prayerMate.getActiveSession(groupOid);
+  }
+
+  // Get details of a specific prayer group
+  @Router.get("/prayer-group/:groupID")
+  async getPrayerGroup(session: SessionDoc, groupID: string) {
+    const groupOid = new ObjectId(groupID);
+    return await prayerMate.getPrayerGroup(groupOid);
+  }
+
+  // Get prayer session details by sessionID
+  @Router.get("/prayer-session/:sessionID")
+  async getPrayerSessionDetails(session: SessionDoc, sessionID: string) {
+    const sessionOid = new ObjectId(sessionID);
+    return await prayerMate.getSessionById(sessionOid);
+  }
+
+  //
+  // EVENTS
+  //
+  // Create an event
+  @Router.post("/events")
+  async createEvent(
+    session: SessionDoc,
+    title: string,
+    description: string,
+    startDate: string,
+    endDate: string,
+    location: string,
+    attendeeIds?: string[], // This is the attendees field
+  ) {
+    const user = Sessioning.getUser(session);
+
+    // Default to an empty array if attendeeIds is not provided
+    const attendeesArray = attendeeIds ? attendeeIds.map((id) => new ObjectId(id)) : [];
+
+    const event = await Eventing.createEvent(title, description, new Date(startDate), new Date(endDate), location, attendeesArray);
+
+    return { msg: "Event created!", event };
+  }
+
+  // Get all events
   @Router.get("/events")
   async getEvents() {
-    throw new  Error("Not implemented Yet")
+    return await Eventing.getEvents();
   }
 
-  /**
-   * Create a new event in the calendar.
-   */
-  @Router.post("/events")
-  async createEvent() {
-    throw new  Error("Not implemented Yet")
+  // Get a specific event by ID
+  @Router.get("/events/:eventId")
+  async getEvent(eventId: string) {
+    const event = await Eventing.getEvent(new ObjectId(eventId));
+    return event;
   }
 
-  /**
-   * Get details of a specific event by EventID.
-   */
-  @Router.get("/events/:id")
-  async getEventById() {
-    throw new  Error("Not implemented Yet")
+  // Update an event
+  @Router.patch("/events/:eventId")
+  async updateEvent(session: SessionDoc, eventId: string, title?: string, description?: string, startDate?: string, endDate?: string, location?: string, attendeeIds?: string[]) {
+    const user = Sessioning.getUser(session);
+    const updatedEvent = await Eventing.updateEvent(
+      new ObjectId(eventId),
+      title,
+      description,
+      startDate ? new Date(startDate) : undefined,
+      endDate ? new Date(endDate) : undefined,
+      location,
+      attendeeIds ? attendeeIds.map((id) => new ObjectId(id)) : undefined,
+    );
+    return { msg: "Event updated!", updatedEvent };
   }
 
-  /**
-   * Update a specific event by EventID.
-   */
-  @Router.patch("/events/:id")
-  async updateEvent() {
-    throw new  Error("Not implemented Yet")
+  // Delete an event
+  @Router.delete("/events/:eventId")
+  async deleteEvent(session: SessionDoc, eventId: string) {
+    const user = Sessioning.getUser(session);
+    await Eventing.deleteEvent(new ObjectId(eventId));
+    return { msg: "Event deleted!" };
   }
 
-  /**
-   * Delete a specific event by EventID.
-   */
-  @Router.delete("/events/:id")
-  async deleteEvent() {
-    throw new  Error("Not implemented Yet")
+  // Get attendees of an event
+  @Router.get("/events/:eventId/attendees")
+  async getEventAttendees(eventId: string) {
+    return await Eventing.getAttendees(new ObjectId(eventId));
   }
 
-  // TOUR
-  /**
-   * Get all tours.
-   */
-  @Router.get("/tours")
-  async getTours() {
-    throw new  Error("Not implemented Yet")
+  // Add an attendee to an event
+  @Router.post("/events/:eventId/attendees")
+  async addAttendee(session: SessionDoc, eventId: string, attendeeId: string) {
+    const user = Sessioning.getUser(session);
+    await Eventing.addAttendee(new ObjectId(eventId), new ObjectId(attendeeId));
+    return { msg: "Attendee added!" };
   }
 
-  /**
-   * Create a new tour.
-   */
-  @Router.post("/tours")
-  async createTour() {
-    throw new  Error("Not implemented Yet")
+  // Remove an attendee from an event
+  @Router.delete("/events/:eventId/attendees/:attendeeId")
+  async removeAttendee(session: SessionDoc, eventId: string, attendeeId: string) {
+    const user = Sessioning.getUser(session);
+    await Eventing.removeAttendee(new ObjectId(eventId), new ObjectId(attendeeId));
+    return { msg: "Attendee removed!" };
   }
 
-  /**
-   * Get details of a specific tour by TourID.
-   */
-  @Router.get("/tours/:id")
-  async getTourById() {
-    throw new  Error("Not implemented Yet")
+  // Update attendee status in an event
+  @Router.patch("/events/:eventId/attendees/:attendeeId")
+  async updateAttendeeStatus(session: SessionDoc, eventId: string, attendeeId: string, status: "going" | "not going" | "maybe") {
+    const user = Sessioning.getUser(session);
+    await Eventing.updateAttendeeStatus(new ObjectId(eventId), new ObjectId(attendeeId), status);
+    return { msg: "Attendee status updated!" };
   }
 
-  /**
-   * Update a specific tour by TourID.
-   */
-  @Router.patch("/tours/:id")
-  async updateTour() {
-    throw new  Error("Not implemented Yet")
+  // PILGRIMAGE TOURING
+
+  @Router.post("/pilgrimage-tour")
+  async createPilgrimageTour(session: SessionDoc, title: string, description: string, location: string) {
+    const user = Sessioning.getUser(session);
+
+    const tour = await Touring.createPilgrimageTour(title, description, location);
+    return { msg: "Pilgrimage tour created!", tour };
   }
 
-  /**
-   * Delete a specific tour by TourID.
-   */
-  @Router.delete("/tours/:id")
-  async deleteTour() {
-    throw new  Error("Not implemented Yet")
+  // Start a pilgrimage tour
+  @Router.post("/pilgrimage-tour/:tourID/start")
+  async startTour(session: SessionDoc, tourID: string) {
+    const user = Sessioning.getUser(session);
+    return await Touring.startTour(user, new ObjectId(tourID));
   }
 
-  /**
-   * Add a participant to a tour.
-   */
-  @Router.post("/tours/:id/participants")
-  async addParticipant() {
-    throw new  Error("Not implemented Yet")
+  // Join a group pilgrimage tour
+  @Router.post("/pilgrimage-tour/:tourID/join")
+  async joinGroupTour(session: SessionDoc, tourID: string) {
+    const user = Sessioning.getUser(session);
+    return await Touring.joinGroupTour(user, new ObjectId(tourID));
   }
 
-  /**
-   * Remove a participant from a tour.
-   */
-  @Router.delete("/tours/:id/participants/:userId")
-  async removeParticipant() {
-    throw new  Error("Not implemented Yet")
+  // Get all pilgrimage tours
+  @Router.get("/pilgrimage-tours")
+  async getAllPilgrimageTours() {
+    const tours = await Touring.tours.readMany({});
+    return { msg: "All pilgrimage tours retrieved!", tours };
   }
 
-
-  // SESSION COUld BE USED WITH TOUR ?????????
-  /**
-   * Routes for the Session concept.
-   */
-
-  /**
-   * Get the current active sessions.
-   */
-  @Router.get("/sessions")
-  async getSessions() {
-    throw new  Error("Not implemented Yet")
+  // View details of a pilgrimage tour
+  @Router.get("/pilgrimage-tour/:tourID")
+  async viewTourDetails(tourID: string) {
+    return await Touring.viewTourDetails(new ObjectId(tourID));
   }
 
-  /**
-   * Get the details of a specific session.
-   */
-  @Router.get("/sessions/:id")
-  async getSessionById() {
-    throw new  Error("Not implemented Yet")
+  // Leave a pilgrimage tour
+  @Router.post("/pilgrimage-tour/:tourID/leave")
+  async leaveTour(session: SessionDoc, tourID: string) {
+    const user = Sessioning.getUser(session);
+    return await Touring.leaveTour(user, new ObjectId(tourID));
   }
-
-  /**
-   * Start a new session.
-   */
-  @Router.post("/sessions")
-  async startSession() {
-    throw new  Error("Not implemented Yet")
-  }
-
-  /**
-   * End a session.
-   */
-  @Router.delete("/sessions/:id")
-  async endSession() {
-    throw new  Error("Not implemented Yet")
-  }
-
-
 }
 
 /** The web app. */
